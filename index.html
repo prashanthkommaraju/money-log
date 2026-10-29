@@ -2,200 +2,395 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Money log</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#10213A">
+<title>Prashanth Money log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f2f4f0;--card:#fff;--ink:#14231f;--mute:#5d6b66;--line:#d9dfda;--acc:#1f6f5c;--acc2:#b4532a;--bar:#cfe3dc}
-@media (prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#0f1714;--card:#17211d;--ink:#e8efeb;--mute:#93a39c;--line:#2a3833;--acc:#54c2a3;--acc2:#e58b5e;--bar:#21443a}}
+:root{--bg:#eef1f6;--card:#fff;--ink:#10213a;--mute:#66758c;--line:#dde3ec;--track:#e6ebf3;--hero:#10213a;--acc:#f4b400;--btn:#10213a;--btntext:#fff;--ok:#1f9d8b;--warn:#e8a100;--bad:#e4572e}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#0b1220;--card:#131d31;--ink:#e9eef7;--mute:#8c9bb3;--line:#223049;--track:#1d2a42;--hero:#1a2a48;--btn:#f4b400;--btntext:#10213a}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;font-variant-numeric:tabular-nums}
-main{max-width:860px;margin:0 auto;padding:20px 16px 60px}
-h1{font-size:1.5rem;margin:0 0 4px}
-h2{font-size:1.05rem;margin:0 0 12px}
-section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-top:16px}
-.top{display:flex;justify-content:space-between;align-items:end;gap:12px;flex-wrap:wrap}
-.total{font-size:2.2rem;font-weight:700;color:var(--acc);line-height:1.1}
-label{display:block;font-size:.85rem;color:var(--mute);margin-bottom:2px}
-input,select,button{font:inherit;color:inherit}
-input,select{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg)}
-button{padding:9px 16px;border:1px solid var(--acc);background:var(--acc);color:#fff;border-radius:6px;cursor:pointer}
-@media (prefers-color-scheme:dark){button{color:#0f1714}}
-button.ghost{background:none;color:var(--ink);border-color:var(--line)}
-button.x{background:none;border:0;color:var(--acc2);padding:2px 8px}
-button:disabled{opacity:.6;cursor:wait}
-:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
-.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end}
-.row{display:grid;grid-template-columns:130px 1fr 90px;gap:10px;align-items:center;margin:6px 0;font-size:.95rem}
-.track{background:var(--bar);border-radius:4px;height:14px}
-.fill{background:var(--acc);height:100%;border-radius:4px}
-.amt{text-align:right}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Figtree,system-ui,-apple-system,"Segoe UI",sans-serif;font-variant-numeric:tabular-nums;-webkit-tap-highlight-color:transparent}
+main{max-width:720px;margin:0 auto;padding:max(14px,env(safe-area-inset-top)) 14px 110px}
+h1{font-size:1.25rem;margin:0;font-weight:800}
+h2{font-size:1rem;margin:0 0 12px;font-weight:700}
+button,input,select{font:inherit;color:inherit}
+input{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+label{display:block;font-size:.8rem;color:var(--mute);margin-bottom:3px;font-weight:600}
+button{cursor:pointer}
+.btn{padding:12px 18px;border:0;border-radius:10px;background:var(--btn);color:var(--btntext);font-weight:700}
+.btn.ghost{background:none;color:var(--ink);border:1px solid var(--line);font-weight:600}
+.btn:disabled{opacity:.6}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+[hidden]{display:none!important}
+.card{background:var(--card);border-radius:16px;padding:16px;margin-top:14px;border:1px solid var(--line)}
+.bar{display:flex;align-items:center;justify-content:space-between;padding:6px 2px 12px}
+.nav{display:flex;align-items:center;gap:4px}
+.nav button{width:42px;height:42px;border-radius:50%;border:0;background:var(--card);font-size:1.3rem;line-height:1;border:1px solid var(--line)}
+.nav .m{min-width:150px;text-align:center;font-weight:700}
+.hero{background:var(--hero);color:#fff;border-radius:20px;padding:20px;display:grid;gap:18px}
+@media(min-width:640px){.hero{grid-template-columns:1fr 190px;align-items:center}}
+.hero .lbl{color:#a9b8d0;font-weight:600}
+.hero .tot{font-size:2.8rem;font-weight:800;line-height:1.1;margin:2px 0 8px}
+.chip-d{display:inline-block;padding:3px 10px;border-radius:99px;background:rgba(255,255,255,.12);font-size:.85rem;font-weight:600}
+.donut{width:100%;max-width:190px;margin:0 auto;display:block}
+.legend{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:4px 18px}
+.lg{display:flex;align-items:center;gap:8px;font-size:.92rem;padding:3px 0}
+.dot{width:10px;height:10px;border-radius:50%;flex:none}
+.lg .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lg .pc{color:#a9b8d0;width:38px;text-align:right}
+.brow{display:block;width:100%;text-align:left;background:none;border:0;padding:8px 0}
+.brow .t{display:flex;justify-content:space-between;gap:8px;font-weight:600}
+.brow .s{color:var(--mute);font-size:.85rem;font-weight:500}
+.prog{height:10px;border-radius:99px;background:var(--track);margin:6px 0 3px;overflow:hidden}
+.prog i{display:block;height:100%;border-radius:99px}
+.link{background:none;border:0;color:var(--ink);font-weight:700;text-decoration:underline;padding:6px 0}
 .scroll{overflow-x:auto}
-table{border-collapse:collapse;width:100%;font-size:.9rem}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
 th,td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
 th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:var(--card)}
 tfoot td{font-weight:700}
-.entry{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
-.entry .d{color:var(--mute);width:56px;flex:none}
+summary{cursor:pointer;font-weight:700}
+.entry{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.entry:last-child{border:0}
 .entry .n{flex:1;min-width:0}
 .entry .n small{color:var(--mute);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.entry .d{color:var(--mute);font-size:.85rem;width:52px;flex:none}
+.entry .x{background:none;border:0;color:var(--mute);width:36px;height:36px;border-radius:50%;font-size:1rem}
 .empty{color:var(--mute);margin:0}
 .tools{display:flex;gap:8px;flex-wrap:wrap}
-.msg{margin:8px 0 0;min-height:1.2em}
-.err{color:var(--acc2)}
-[hidden]{display:none!important}
+.fab{position:fixed;right:max(18px,calc(50% - 342px));bottom:max(20px,env(safe-area-inset-bottom));height:60px;padding:0 24px 0 20px;border-radius:30px;border:0;background:var(--acc);color:#10213a;font-weight:800;font-size:1.05rem;box-shadow:0 6px 20px rgba(0,0,0,.28);display:flex;align-items:center;gap:8px}
+.fab b{font-size:1.7rem;line-height:1;font-weight:600}
+dialog{border:0;padding:0;background:var(--card);color:var(--ink);width:100%;max-width:520px;margin:auto auto 0;border-radius:22px 22px 0 0}
+dialog::backdrop{background:rgba(8,14,26,.55)}
+@media(min-width:640px){dialog{margin:auto;border-radius:22px}}
+.sheet{padding:20px 18px max(20px,env(safe-area-inset-bottom))}
+.amt{display:flex;align-items:center;gap:6px;font-size:2.6rem;font-weight:800}
+.amt input{font-size:2.6rem;font-weight:800;border:0;background:none;padding:0;width:100%}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 10px}
+.chip{padding:9px 14px;border-radius:99px;border:1px solid var(--line);background:var(--bg);font-weight:600;font-size:.92rem}
+.chip.on{background:var(--btn);color:var(--btntext);border-color:var(--btn)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0 14px}
+.msg{margin:8px 0 0;min-height:1.2em;color:var(--mute)}
+.err{color:var(--bad);font-weight:600}
+.note{background:var(--track);border-radius:10px;padding:10px 12px;font-size:.88rem;color:var(--mute)}
+body.auth{background:#10213a}
+.login{max-width:440px;margin:18px auto;background:var(--card);border-radius:24px;overflow:hidden;box-shadow:0 14px 44px rgba(0,0,0,.4)}
+.login svg{display:block;width:100%;height:auto;max-height:300px}
+.logbody{padding:20px 20px 26px}
+.brand{font-size:1.75rem;font-weight:800;line-height:1.15}
+.tag{color:var(--mute);margin:4px 0 18px}
+.btn.sun{background:var(--acc);color:#10213a}
 </style>
 </head>
-<body>
+<body class="auth">
 <main>
-  <!-- Sign-in screen -->
   <div id="auth" hidden>
-    <h1>Money log</h1>
-    <section>
-      <h2>Sign in to see your expenses</h2>
-      <div class="form">
-        <div><label for="email">Email</label><input id="email" type="email" autocomplete="email"></div>
-        <div><label for="pass">Password (6+ characters)</label><input id="pass" type="password" autocomplete="current-password"></div>
-        <div class="tools"><button id="signin">Sign in</button><button id="signup" class="ghost">Create account</button></div>
+    <div class="login">
+      <svg viewBox="0 0 400 260" role="img" aria-label="A colourful temple at sunset" preserveAspectRatio="xMidYMid slice">
+  <rect width="400" height="260" fill="#1b2a4a"/>
+  <rect y="90" width="400" height="60" fill="#3b2a6e" opacity=".55"/>
+  <rect y="150" width="400" height="70" fill="#8a3a7a" opacity=".5"/>
+  <circle cx="200" cy="150" r="100" fill="#e4572e" opacity=".28"/>
+  <circle cx="200" cy="150" r="72" fill="#f4b400" opacity=".35"/>
+  <circle cx="200" cy="150" r="46" fill="#f4b400" opacity=".9"/>
+  <g fill="#fff"><circle cx="35" cy="90" r="1.3"/><circle cx="88" cy="112" r="1.1"/><circle cx="330" cy="82" r="1.3"/><circle cx="372" cy="112" r="1.1"/><circle cx="300" cy="62" r="1.2"/><circle cx="58" cy="64" r="1.2"/></g>
+  <g stroke="#fff" fill="none" stroke-width="1.4" stroke-linecap="round"><path d="M285 96q5-7 10 0q5-7 10 0"/><path d="M322 118q4-5 8 0q4-5 8 0"/><path d="M62 84q4-5 8 0q4-5 8 0"/></g>
+  <rect y="220" width="400" height="40" fill="#0c1730"/>
+  <!-- side shrines -->
+  <rect x="72" y="200" width="48" height="20" fill="#2a1f4d"/>
+  <polygon points="76,200 116,200 110,182 82,182" fill="#2ec4b6"/>
+  <polygon points="82,182 110,182 104,168 88,168" fill="#ff8fb1"/>
+  <circle cx="96" cy="163" r="3.5" fill="#f4b400"/>
+  <rect x="280" y="200" width="48" height="20" fill="#2a1f4d"/>
+  <polygon points="284,200 324,200 318,182 290,182" fill="#2ec4b6"/>
+  <polygon points="290,182 318,182 312,168 296,168" fill="#ff8fb1"/>
+  <circle cx="304" cy="163" r="3.5" fill="#f4b400"/>
+  <!-- main gopuram -->
+  <rect x="130" y="180" width="140" height="40" fill="#2a1f4d"/>
+  <path d="M184 220V200a16 16 0 0 1 32 0V220Z" fill="#f4b400"/>
+  <polygon points="135,180 265,180 250,155 150,155" fill="#e4572e"/>
+  <polygon points="150,155 250,155 238,133 162,133" fill="#f4b400"/>
+  <polygon points="162,133 238,133 228,113 172,113" fill="#2ec4b6"/>
+  <polygon points="172,113 228,113 220,95 180,95" fill="#8e7cff"/>
+  <polygon points="180,95 220,95 213,80 187,80" fill="#ff8fb1"/>
+  <rect x="194" y="70" width="12" height="10" fill="#f4b400"/>
+  <circle cx="200" cy="64" r="4" fill="#f4b400"/>
+  <path d="M200 60V50" stroke="#f4b400" stroke-width="2" stroke-linecap="round"/>
+  <g fill="#2a1f4d"><rect x="168" y="160" width="10" height="14" rx="3"/><rect x="195" y="160" width="10" height="14" rx="3"/><rect x="222" y="160" width="10" height="14" rx="3"/><rect x="181" y="138" width="8" height="12" rx="3"/><rect x="211" y="138" width="8" height="12" rx="3"/><rect x="194" y="118" width="12" height="10" rx="3"/><rect x="196" y="100" width="8" height="8" rx="3"/><circle cx="200" cy="88" r="3"/></g>
+  <g stroke="#fff" stroke-opacity=".35" stroke-width="1"><path d="M150 155h100M162 133h76M172 113h56M180 95h40"/></g>
+  <!-- steps -->
+  <rect x="105" y="220" width="190" height="8" fill="#3a2d63"/>
+  <rect x="92" y="228" width="216" height="8" fill="#4a3a7a"/>
+  <!-- marigold garland -->
+  <path d="M-10 14Q95 60 200 18Q305 60 410 14" fill="none" stroke="#ffd36b" stroke-opacity=".5" stroke-width="1"/>
+  <path d="M-10 14Q95 60 200 18Q305 60 410 14" fill="none" stroke="#f4b400" stroke-width="9" stroke-linecap="round" stroke-dasharray="0 17"/>
+  <path d="M-10 14Q95 60 200 18Q305 60 410 14" fill="none" stroke="#ff7a59" stroke-width="9" stroke-linecap="round" stroke-dasharray="0 17" stroke-dashoffset="-8.5"/>
+</svg>
+      <div class="logbody">
+        <h1 class="brand">Prashanth Money log</h1>
+        <p class="tag">Sign in to see your expenses</p>
+        <label for="email">Email</label><input id="email" type="email" autocomplete="email">
+        <div style="height:10px"></div>
+        <label for="pass">Password (6+ characters)</label><input id="pass" type="password" autocomplete="current-password">
+        <div class="tools" style="margin-top:16px"><button class="btn sun" id="signin" style="flex:1">Sign in</button><button class="btn ghost" id="signup">Create account</button></div>
+        <p class="msg" id="authmsg"></p>
       </div>
-      <p class="msg" id="authmsg"></p>
-    </section>
+    </div>
   </div>
 
-  <!-- App -->
   <div id="app" hidden>
-    <div class="top">
-      <div>
-        <h1>Money log</h1>
-        <div class="total" id="total">₹0</div>
-        <div style="color:var(--mute)" id="sub"></div>
+    <div class="bar">
+      <h1>Money log</h1>
+      <div class="nav">
+        <button id="prev" aria-label="Previous month">‹</button>
+        <span class="m" id="mlabel"></span>
+        <button id="next" aria-label="Next month">›</button>
       </div>
-      <div style="min-width:170px"><label for="month">Month</label><select id="month"></select></div>
     </div>
 
-    <section>
-      <h2>Add an expense</h2>
-      <div class="form">
-        <div><label for="date">Date</label><input id="date" type="date"></div>
-        <div><label for="cat">Category</label><input id="cat" list="cats" placeholder="Groceries"></div>
-        <div><label for="amt">Amount (₹)</label><input id="amt" type="number" min="0" step="any" inputmode="decimal"></div>
-        <div><label for="note">Note (optional)</label><input id="note"></div>
-        <div><button id="add">Add expense</button></div>
+    <div class="hero">
+      <div>
+        <div class="lbl" id="hlabel">Spent</div>
+        <div class="tot" id="total">₹0</div>
+        <span class="chip-d" id="delta"></span>
       </div>
-      <datalist id="cats"></datalist>
-      <p class="msg err" id="err"></p>
-    </section>
+      <div id="donut"></div>
+      <div class="legend" id="legend"></div>
+    </div>
 
-    <section><h2>This month by category</h2><div id="bars"></div></section>
-    <section><h2>All months by category</h2><div class="scroll" id="matrix"></div></section>
-    <section><h2>Entries this month</h2><div id="list"></div></section>
+    <div class="card">
+      <h2>Budgets</h2>
+      <div id="budgets"></div>
+    </div>
 
-    <section>
+    <div class="card">
+      <h2>Last 6 months</h2>
+      <div id="trend"></div>
+    </div>
+
+    <div class="card">
+      <h2>Entries</h2>
+      <div id="list"></div>
+    </div>
+
+    <div class="card">
+      <details><summary>All months by category</summary><div class="scroll" id="matrix" style="margin-top:10px"></div></details>
+    </div>
+
+    <div class="card">
       <h2>Your data</h2>
-      <p style="color:var(--mute);margin-top:0" id="who"></p>
+      <p class="empty" id="who" style="margin-bottom:12px"></p>
       <div class="tools">
-        <button class="ghost" id="csv">Export CSV</button>
-        <button class="ghost" id="json">Export backup</button>
-        <button class="ghost" id="imp">Import backup</button>
-        <button class="ghost" id="signout">Sign out</button>
+        <button class="btn ghost" id="csv">Export CSV</button>
+        <button class="btn ghost" id="json">Export backup</button>
+        <button class="btn ghost" id="imp">Import backup</button>
+        <button class="btn ghost" id="signout">Sign out</button>
         <input id="file" type="file" accept=".json" hidden>
       </div>
-    </section>
+    </div>
+
+    <button class="fab" id="fab" aria-label="Add expense"><b>+</b> Add</button>
   </div>
 </main>
 
+<!-- Quick-add sheet -->
+<dialog id="sheet"><div class="sheet">
+  <label for="amt">Amount</label>
+  <div class="amt"><span>₹</span><input id="amt" type="number" min="0" step="any" inputmode="decimal" placeholder="0"></div>
+  <label style="margin-top:8px">Category</label>
+  <div class="chips" id="chips"></div>
+  <input id="newcat" placeholder="Or type a new category">
+  <div class="grid2">
+    <div><label for="date">Date</label><input id="date" type="date"></div>
+    <div><label for="note">Note (optional)</label><input id="note"></div>
+  </div>
+  <p class="msg err" id="err"></p>
+  <div class="tools"><button class="btn" id="save" style="flex:1">Save expense</button><button class="btn ghost" id="cancel">Cancel</button></div>
+</div></dialog>
+
+<!-- Budget dialog -->
+<dialog id="bdlg"><div class="sheet">
+  <h2 id="btitle">Monthly budget</h2>
+  <label for="bcat">Category</label><input id="bcat" list="bcats">
+  <datalist id="bcats"></datalist>
+  <div style="height:10px"></div>
+  <label for="blim">Limit per month (₹)</label><input id="blim" type="number" min="0" step="any" inputmode="decimal">
+  <p class="msg err" id="berr"></p>
+  <div class="tools"><button class="btn" id="bsave" style="flex:1">Save budget</button><button class="btn ghost" id="bdel">Remove</button><button class="btn ghost" id="bcancel">Cancel</button></div>
+</div></dialog>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.js"></script>
 <script>
-/* ====== 1. PASTE YOUR SUPABASE VALUES HERE ====== */
-const SB_URL = 'https://mgdrmewrylfdceavukii.supabase.co';
-const SB_KEY = 'sb_publishable_-S5LsQ-UT8KQ_zBUoELzDA_aCxZ2Vgz';
-/* ================================================ */
-
-const sb = supabase.createClient(SB_URL, SB_KEY);
-const $ = id => document.getElementById(id);
+const SB_URL='https://mgdrmewrylfdceavukii.supabase.co';
+const SB_KEY='sb_publishable_-S5LsQ-UT8KQ_zBUoELzDA_aCxZ2Vgz';
+const sb=supabase.createClient(SB_URL,SB_KEY);
+const $=id=>document.getElementById(id);
 const DEFAULT_CATS=['Rent / EMI','Groceries','Food & dining','Transport','Utilities','Shopping','Health','Investments','Entertainment','Education','Other'];
+const PAL=['#f4b400','#2ec4b6','#ff7a59','#8e7cff','#4da3ff','#b8e05a','#ff8fb1','#c2a57a','#9aa9bd','#5fd38d','#e36bd9'];
 const inr=n=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(n);
+const compact=n=>'₹'+new Intl.NumberFormat('en-IN',{notation:'compact',maximumFractionDigits:1}).format(n);
 const today=()=>new Date().toISOString().slice(0,10);
 const mkey=d=>d.slice(0,7);
 const mlabel=k=>new Date(k+'-01T00:00:00').toLocaleString('en-IN',{month:'long',year:'numeric'});
+const mshort=k=>new Date(k+'-01T00:00:00').toLocaleString('en-IN',{month:'short'});
+const shift=(k,n)=>{const d=new Date(k+'-01T00:00:00');d.setMonth(d.getMonth()+n);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')};
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fromRow=r=>({id:r.id,date:r.date,cat:r.category,amt:Number(r.amount),note:r.note||''});
-let entries=[], cur=mkey(today()), user=null;
+let entries=[],budgets={},budgetsOk=true,cur=mkey(today()),user=null,CATS=[],pick='';
+const color=c=>PAL[Math.max(0,CATS.indexOf(c))%PAL.length];
+const sumBy=f=>entries.filter(f).reduce((s,e)=>s+e.amt,0);
 
 /* ---------- auth ---------- */
-function showAuth(msg,isErr){const m=$('authmsg');m.textContent=msg||'';m.className='msg'+(isErr?' err':'')}
+function authMsg(m,bad){const e=$('authmsg');e.textContent=m||'';e.className='msg'+(bad?' err':'')}
 async function creds(fn){
-  const email=$('email').value.trim(), password=$('pass').value;
-  if(!email||password.length<6){showAuth('Enter your email and a password of at least 6 characters.',true);return}
-  showAuth('Working…');
+  const email=$('email').value.trim(),password=$('pass').value;
+  if(!email||password.length<6){authMsg('Enter your email and a password of at least 6 characters.',true);return}
+  authMsg('Working…');
   const {data,error}=await fn({email,password});
-  if(error){showAuth(error.message,true);return}
-  if(!data.session)showAuth('Account created. Check your email to confirm it, then sign in.');
+  if(error){authMsg(error.message,true);return}
+  if(!data.session)authMsg('Account created. Check your email to confirm it, then sign in.');
 }
 $('signin').onclick=()=>creds(c=>sb.auth.signInWithPassword(c));
 $('signup').onclick=()=>creds(c=>sb.auth.signUp(c));
 $('signout').onclick=()=>sb.auth.signOut();
 $('pass').addEventListener('keydown',e=>{if(e.key==='Enter')$('signin').click()});
-
-sb.auth.onAuthStateChange((_evt,session)=>{
-  user=session?session.user:null;
-  $('auth').hidden=!!user; $('app').hidden=!user;
+sb.auth.onAuthStateChange((_e,s)=>{
+  user=s?s.user:null;
+  $('auth').hidden=!!user;$('app').hidden=!user;document.body.classList.toggle('auth',!user);
   if(user){$('who').textContent='Signed in as '+user.email+'. Your entries sync across your devices.';load()}
-  else{entries=[];showAuth('')}
+  else{entries=[];budgets={};authMsg('')}
 });
+sb.auth.getSession().then(({data})=>{if(!data.session)$('auth').hidden=false});
 
 /* ---------- data ---------- */
 async function load(){
-  const {data,error}=await sb.from('expenses').select('*').order('date',{ascending:false});
-  if(error){$('err').textContent='Could not load entries: '+error.message;return}
-  entries=data.map(fromRow); render();
+  const [a,b]=await Promise.all([
+    sb.from('expenses').select('*').order('date',{ascending:false}),
+    sb.from('budgets').select('*')
+  ]);
+  if(a.error){alert('Could not load entries: '+a.error.message);return}
+  entries=a.data.map(fromRow);
+  budgetsOk=!b.error;budgets={};
+  if(b.data)b.data.forEach(r=>budgets[r.category]=Number(r.monthly_limit));
+  render();
 }
-$('add').onclick=async()=>{
-  const date=$('date').value,cat=$('cat').value.trim(),amt=parseFloat($('amt').value);
-  if(!date||!cat||!(amt>0)){$('err').textContent='Enter a date, a category and an amount above 0.';return}
-  $('err').textContent=''; $('add').disabled=true;
-  const {data,error}=await sb.from('expenses').insert({date,category:cat,amount:amt,note:$('note').value.trim()}).select().single();
-  $('add').disabled=false;
-  if(error){$('err').textContent='Could not save: '+error.message;return}
-  entries.push(fromRow(data)); cur=mkey(date);
-  $('amt').value='';$('note').value='';render();$('amt').focus();
-};
-['amt','note','cat'].forEach(i=>$(i).addEventListener('keydown',e=>{if(e.key==='Enter')$('add').click()}));
-$('list').onclick=async e=>{
-  const id=e.target.dataset.id;
-  if(!id||!confirm('Delete this entry?'))return;
-  const {error}=await sb.from('expenses').delete().eq('id',id);
-  if(error){$('err').textContent='Could not delete: '+error.message;return}
-  entries=entries.filter(x=>x.id!==id);render();
-};
 
 /* ---------- render ---------- */
-const months=()=>{const s=new Set(entries.map(e=>mkey(e.date)));s.add(mkey(today()));return [...s].sort().reverse()};
-const cats=()=>{const s=new Set(DEFAULT_CATS);entries.forEach(e=>s.add(e.cat));return [...s]};
 function render(){
-  const ms=months(); if(!ms.includes(cur))cur=ms[0];
-  $('month').innerHTML=ms.map(m=>`<option value="${m}"${m===cur?' selected':''}>${mlabel(m)}</option>`).join('');
-  $('cats').innerHTML=cats().map(c=>`<option value="${esc(c)}">`).join('');
+  const set=new Set(DEFAULT_CATS);entries.forEach(e=>set.add(e.cat));Object.keys(budgets).forEach(c=>set.add(c));CATS=[...set];
+  $('mlabel').textContent=mlabel(cur);
   const mine=entries.filter(e=>mkey(e.date)===cur).sort((a,b)=>b.date.localeCompare(a.date));
-  $('total').textContent=inr(mine.reduce((s,e)=>s+e.amt,0));
-  $('sub').textContent=mine.length?`${mine.length} entr${mine.length===1?'y':'ies'} in ${mlabel(cur)}`:`Nothing logged for ${mlabel(cur)} yet`;
+  const total=mine.reduce((s,e)=>s+e.amt,0);
+  const prevTotal=sumBy(e=>mkey(e.date)===shift(cur,-1));
+  $('hlabel').textContent='Spent in '+mshort(cur);
+  $('total').textContent=inr(total);
+  $('delta').textContent=prevTotal?(total>=prevTotal?'▲ ':'▼ ')+Math.round(Math.abs(total-prevTotal)/prevTotal*100)+'% vs '+mshort(shift(cur,-1)):'No spending logged last month';
 
   const by={};mine.forEach(e=>by[e.cat]=(by[e.cat]||0)+e.amt);
-  const rows=Object.entries(by).sort((a,b)=>b[1]-a[1]), max=rows.length?rows[0][1]:1;
-  $('bars').innerHTML=rows.length?rows.map(([c,v])=>`<div class="row"><span>${esc(c)}</span><div class="track"><div class="fill" style="width:${v/max*100}%"></div></div><span class="amt">${inr(v)}</span></div>`).join(''):'<p class="empty">Add an expense to see where the money went.</p>';
+  const rows=Object.entries(by).sort((a,b)=>b[1]-a[1]);
 
-  const mm=months().slice(0,12).reverse(), used=cats().filter(c=>entries.some(e=>e.cat===c));
-  if(!used.length){$('matrix').innerHTML='<p class="empty">Your month-by-category table will appear here.</p>'}
-  else{
-    const sum=(f)=>entries.filter(f).reduce((s,e)=>s+e.amt,0);
-    let h='<table><thead><tr><th>Category</th>'+mm.map(m=>`<th>${new Date(m+'-01T00:00:00').toLocaleString('en-IN',{month:'short',year:'2-digit'})}</th>`).join('')+'</tr></thead><tbody>';
-    used.forEach(c=>{h+=`<tr><td>${esc(c)}</td>`+mm.map(m=>{const v=sum(e=>e.cat===c&&mkey(e.date)===m);return `<td>${v?inr(v):'–'}</td>`}).join('')+'</tr>'});
-    h+='</tbody><tfoot><tr><td>Total</td>'+mm.map(m=>`<td>${inr(sum(e=>mkey(e.date)===m))}</td>`).join('')+'</tr></tfoot></table>';
-    $('matrix').innerHTML=h;
+  // donut
+  let off=25,svg='<svg viewBox="0 0 42 42" class="donut" role="img" aria-label="Spending by category"><circle cx="21" cy="21" r="15.9155" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="5"/>';
+  rows.forEach(([c,v])=>{const p=v/total*100;svg+=`<circle cx="21" cy="21" r="15.9155" fill="none" stroke="${color(c)}" stroke-width="5" stroke-dasharray="${p} ${100-p}" stroke-dashoffset="${off}"/>`;off-=p});
+  svg+=`<text x="21" y="23" text-anchor="middle" font-size="5.2" font-weight="800" fill="#fff">${total?compact(total):'₹0'}</text></svg>`;
+  $('donut').innerHTML=svg;
+  $('legend').innerHTML=rows.length?rows.map(([c,v])=>`<div class="lg"><span class="dot" style="background:${color(c)}"></span><span class="nm">${esc(c)}</span><b>${inr(v)}</b><span class="pc">${Math.round(v/total*100)}%</span></div>`).join(''):'<div class="lg" style="color:#a9b8d0">Nothing logged yet. Tap Add to start.</div>';
+
+  // budgets
+  const bcats=[...new Set([...Object.keys(budgets),...Object.keys(by)])];
+  let bh=budgetsOk?'':'<div class="note">Budgets need one extra database table. Run the budgets SQL in Supabase, then reload.</div>';
+  if(budgetsOk){
+    bcats.sort((a,b)=>((by[b]||0)/(budgets[b]||Infinity))-((by[a]||0)/(budgets[a]||Infinity))||(by[b]||0)-(by[a]||0));
+    bh=bcats.map(c=>{
+      const sp=by[c]||0,lim=budgets[c];
+      if(!lim)return `<button class="brow" data-b="${esc(c)}"><div class="t"><span>${esc(c)}</span><span>${inr(sp)}</span></div><div class="s">No budget · tap to set one</div></button>`;
+      const p=sp/lim,col=p>1?'var(--bad)':p>=.8?'var(--warn)':'var(--ok)';
+      return `<button class="brow" data-b="${esc(c)}"><div class="t"><span>${esc(c)}</span><span>${inr(sp)} <span class="s">of ${inr(lim)}</span></span></div><div class="prog"><i style="width:${Math.min(100,p*100)}%;background:${col}"></i></div><div class="s">${p>1?'Over by '+inr(sp-lim):inr(lim-sp)+' left'}</div></button>`;
+    }).join('')||'<p class="empty">Set a monthly limit for any category to track it here.</p>';
+    bh+='<button class="link" data-b="">+ Add a budget</button>';
   }
-  $('list').innerHTML=mine.length?mine.map(e=>`<div class="entry"><span class="d">${e.date.slice(8)}/${e.date.slice(5,7)}</span><span class="n">${esc(e.cat)}${e.note?`<small>${esc(e.note)}</small>`:''}</span><b>${inr(e.amt)}</b><button class="x" data-id="${e.id}" aria-label="Delete entry">Delete</button></div>`).join(''):'<p class="empty">No entries this month.</p>';
+  $('budgets').innerHTML=bh;
+
+  // trend
+  const ms=[];for(let i=5;i>=0;i--)ms.push(shift(cur,-i));
+  const vals=ms.map(m=>sumBy(e=>mkey(e.date)===m)),mx=Math.max(...vals,1);
+  let t='<svg viewBox="0 0 320 130" width="100%" role="img" aria-label="Spending over the last 6 months">';
+  ms.forEach((m,i)=>{
+    const step=320/6,x=i*step+(step-34)/2,h=vals[i]/mx*78,y=98-h,on=m===cur;
+    t+=`<g data-m="${m}" style="cursor:pointer"><rect x="${x}" y="${y}" width="34" height="${Math.max(h,2)}" rx="6" fill="${on?'var(--acc)':'var(--track)'}"/><text x="${x+17}" y="${y-5}" text-anchor="middle" font-size="9.5" font-weight="700" fill="var(--ink)">${vals[i]?compact(vals[i]):''}</text><text x="${x+17}" y="116" text-anchor="middle" font-size="10.5" font-weight="${on?800:500}" fill="var(--mute)">${mshort(m)}</text><rect x="${i*step}" y="0" width="${step}" height="130" fill="transparent"/></g>`;
+  });
+  $('trend').innerHTML=t+'</svg>';
+
+  // matrix
+  const mm=[];for(let i=11;i>=0;i--)mm.push(shift(cur,-i));
+  const used=CATS.filter(c=>entries.some(e=>e.cat===c));
+  $('matrix').innerHTML=used.length?'<table><thead><tr><th>Category</th>'+mm.map(m=>`<th>${mshort(m)}</th>`).join('')+'</tr></thead><tbody>'+used.map(c=>`<tr><td>${esc(c)}</td>`+mm.map(m=>{const v=sumBy(e=>e.cat===c&&mkey(e.date)===m);return `<td>${v?inr(v):'–'}</td>`}).join('')+'</tr>').join('')+'</tbody><tfoot><tr><td>Total</td>'+mm.map(m=>`<td>${inr(sumBy(e=>mkey(e.date)===m))}</td>`).join('')+'</tr></tfoot></table>':'<p class="empty">Your month-by-category table will appear here.</p>';
+
+  // entries
+  $('list').innerHTML=mine.length?mine.map(e=>`<div class="entry"><span class="dot" style="background:${color(e.cat)}"></span><span class="n">${esc(e.cat)}${e.note?`<small>${esc(e.note)}</small>`:''}</span><span class="d">${new Date(e.date+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</span><b>${inr(e.amt)}</b><button class="x" data-id="${e.id}" aria-label="Delete entry">✕</button></div>`).join(''):'<p class="empty">No entries in '+mlabel(cur)+'.</p>';
 }
-$('date').value=today();
-$('month').onchange=e=>{cur=e.target.value;render()};
+$('prev').onclick=()=>{cur=shift(cur,-1);render()};
+$('next').onclick=()=>{cur=shift(cur,1);render()};
+$('trend').onclick=e=>{const g=e.target.closest('[data-m]');if(g){cur=g.dataset.m;render()}};
+
+/* ---------- quick add ---------- */
+function drawChips(){
+  const cnt={};entries.forEach(e=>cnt[e.cat]=(cnt[e.cat]||0)+1);
+  const order=[...CATS].sort((a,b)=>(cnt[b]||0)-(cnt[a]||0));
+  $('chips').innerHTML=order.map(c=>`<button class="chip${c===pick?' on':''}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+}
+$('fab').onclick=()=>{
+  pick='';$('amt').value='';$('note').value='';$('newcat').value='';$('err').textContent='';$('date').value=today();
+  drawChips();$('sheet').showModal();setTimeout(()=>$('amt').focus(),50);
+};
+$('chips').onclick=e=>{const b=e.target.closest('[data-c]');if(!b)return;pick=b.dataset.c;$('newcat').value='';drawChips()};
+$('newcat').oninput=e=>{pick=e.target.value.trim();drawChips()};
+$('cancel').onclick=()=>$('sheet').close();
+$('save').onclick=async()=>{
+  const date=$('date').value,cat=pick,amt=parseFloat($('amt').value);
+  if(!(amt>0)||!cat||!date){$('err').textContent='Enter an amount, pick a category and a date.';return}
+  $('save').disabled=true;
+  const {data,error}=await sb.from('expenses').insert({date,category:cat,amount:amt,note:$('note').value.trim()}).select().single();
+  $('save').disabled=false;
+  if(error){$('err').textContent='Could not save: '+error.message;return}
+  entries.push(fromRow(data));cur=mkey(date);$('sheet').close();render();
+};
+$('amt').addEventListener('keydown',e=>{if(e.key==='Enter')$('save').click()});
+$('list').onclick=async e=>{
+  const id=e.target.dataset.id;if(!id||!confirm('Delete this entry?'))return;
+  const {error}=await sb.from('expenses').delete().eq('id',id);
+  if(error){alert('Could not delete: '+error.message);return}
+  entries=entries.filter(x=>x.id!==id);render();
+};
+['sheet','bdlg'].forEach(id=>$(id).addEventListener('click',e=>{if(e.target===$(id))$(id).close()}));
+
+/* ---------- budgets ---------- */
+$('budgets').onclick=e=>{
+  const b=e.target.closest('[data-b]');if(!b)return;
+  const c=b.dataset.b;
+  $('btitle').textContent=c?'Budget for '+c:'New budget';
+  $('bcat').value=c;$('bcat').readOnly=!!c;$('blim').value=budgets[c]||'';$('berr').textContent='';
+  $('bdel').hidden=!budgets[c];
+  $('bcats').innerHTML=CATS.map(x=>`<option value="${esc(x)}">`).join('');
+  $('bdlg').showModal();setTimeout(()=>$('blim').focus(),50);
+};
+$('bcancel').onclick=()=>$('bdlg').close();
+$('bsave').onclick=async()=>{
+  const category=$('bcat').value.trim(),lim=parseFloat($('blim').value);
+  if(!category||!(lim>0)){$('berr').textContent='Enter a category and a limit above 0.';return}
+  const {error}=await sb.from('budgets').upsert({category,monthly_limit:lim},{onConflict:'user_id,category'});
+  if(error){$('berr').textContent='Could not save: '+error.message;return}
+  budgets[category]=lim;$('bdlg').close();render();
+};
+$('bdel').onclick=async()=>{
+  const category=$('bcat').value.trim();
+  const {error}=await sb.from('budgets').delete().eq('category',category);
+  if(error){$('berr').textContent='Could not remove: '+error.message;return}
+  delete budgets[category];$('bdlg').close();render();
+};
 
 /* ---------- export / import ---------- */
 function dl(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
@@ -203,9 +398,9 @@ $('csv').onclick=()=>dl('money-log.csv','Date,Category,Amount,Note\n'+entries.sl
 $('json').onclick=()=>dl('money-log-backup.json',JSON.stringify(entries.map(({date,cat,amt,note})=>({date,cat,amt,note})),null,1),'application/json');
 $('imp').onclick=()=>$('file').click();
 $('file').onchange=async e=>{
-  const f=e.target.files[0]; e.target.value=''; if(!f)return;
+  const f=e.target.files[0];e.target.value='';if(!f)return;
   try{
-    const data=JSON.parse(await f.text()); if(!Array.isArray(data))throw 0;
+    const data=JSON.parse(await f.text());if(!Array.isArray(data))throw 0;
     const k=x=>[x.date,x.cat,Number(x.amt),x.note||''].join('|');
     const have=new Set(entries.map(k));
     const rows=data.filter(x=>x&&x.date&&x.cat&&Number(x.amt)>0&&!have.has(k(x))).map(x=>({date:x.date,category:x.cat,amount:Number(x.amt),note:x.note||''}));
@@ -213,9 +408,6 @@ $('file').onchange=async e=>{
     await load();
   }catch(err){alert('Could not import that file.')}
 };
-
-/* show the right screen on first load */
-sb.auth.getSession().then(({data})=>{if(!data.session){$('auth').hidden=false}});
 </script>
 </body>
 </html>
