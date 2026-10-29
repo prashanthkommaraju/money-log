@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Money log</title>
+<style>
+:root{--bg:#f2f4f0;--card:#fff;--ink:#14231f;--mute:#5d6b66;--line:#d9dfda;--acc:#1f6f5c;--acc2:#b4532a;--bar:#cfe3dc}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#0f1714;--card:#17211d;--ink:#e8efeb;--mute:#93a39c;--line:#2a3833;--acc:#54c2a3;--acc2:#e58b5e;--bar:#21443a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;font-variant-numeric:tabular-nums}
+main{max-width:860px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:1.5rem;margin:0 0 4px}
+h2{font-size:1.05rem;margin:0 0 12px}
+section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-top:16px}
+.top{display:flex;justify-content:space-between;align-items:end;gap:12px;flex-wrap:wrap}
+.total{font-size:2.2rem;font-weight:700;color:var(--acc);line-height:1.1}
+label{display:block;font-size:.85rem;color:var(--mute);margin-bottom:2px}
+input,select,button{font:inherit;color:inherit}
+input,select{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg)}
+button{padding:9px 16px;border:1px solid var(--acc);background:var(--acc);color:#fff;border-radius:6px;cursor:pointer}
+@media (prefers-color-scheme:dark){button{color:#0f1714}}
+button.ghost{background:none;color:var(--ink);border-color:var(--line)}
+button.x{background:none;border:0;color:var(--acc2);padding:2px 8px}
+button:disabled{opacity:.6;cursor:wait}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end}
+.row{display:grid;grid-template-columns:130px 1fr 90px;gap:10px;align-items:center;margin:6px 0;font-size:.95rem}
+.track{background:var(--bar);border-radius:4px;height:14px}
+.fill{background:var(--acc);height:100%;border-radius:4px}
+.amt{text-align:right}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:var(--card)}
+tfoot td{font-weight:700}
+.entry{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.entry .d{color:var(--mute);width:56px;flex:none}
+.entry .n{flex:1;min-width:0}
+.entry .n small{color:var(--mute);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.empty{color:var(--mute);margin:0}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.msg{margin:8px 0 0;min-height:1.2em}
+.err{color:var(--acc2)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <!-- Sign-in screen -->
+  <div id="auth" hidden>
+    <h1>Money log</h1>
+    <section>
+      <h2>Sign in to see your expenses</h2>
+      <div class="form">
+        <div><label for="email">Email</label><input id="email" type="email" autocomplete="email"></div>
+        <div><label for="pass">Password (6+ characters)</label><input id="pass" type="password" autocomplete="current-password"></div>
+        <div class="tools"><button id="signin">Sign in</button><button id="signup" class="ghost">Create account</button></div>
+      </div>
+      <p class="msg" id="authmsg"></p>
+    </section>
+  </div>
+
+  <!-- App -->
+  <div id="app" hidden>
+    <div class="top">
+      <div>
+        <h1>Money log</h1>
+        <div class="total" id="total">₹0</div>
+        <div style="color:var(--mute)" id="sub"></div>
+      </div>
+      <div style="min-width:170px"><label for="month">Month</label><select id="month"></select></div>
+    </div>
+
+    <section>
+      <h2>Add an expense</h2>
+      <div class="form">
+        <div><label for="date">Date</label><input id="date" type="date"></div>
+        <div><label for="cat">Category</label><input id="cat" list="cats" placeholder="Groceries"></div>
+        <div><label for="amt">Amount (₹)</label><input id="amt" type="number" min="0" step="any" inputmode="decimal"></div>
+        <div><label for="note">Note (optional)</label><input id="note"></div>
+        <div><button id="add">Add expense</button></div>
+      </div>
+      <datalist id="cats"></datalist>
+      <p class="msg err" id="err"></p>
+    </section>
+
+    <section><h2>This month by category</h2><div id="bars"></div></section>
+    <section><h2>All months by category</h2><div class="scroll" id="matrix"></div></section>
+    <section><h2>Entries this month</h2><div id="list"></div></section>
+
+    <section>
+      <h2>Your data</h2>
+      <p style="color:var(--mute);margin-top:0" id="who"></p>
+      <div class="tools">
+        <button class="ghost" id="csv">Export CSV</button>
+        <button class="ghost" id="json">Export backup</button>
+        <button class="ghost" id="imp">Import backup</button>
+        <button class="ghost" id="signout">Sign out</button>
+        <input id="file" type="file" accept=".json" hidden>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.js"></script>
+<script>
+/* ====== 1. PASTE YOUR SUPABASE VALUES HERE ====== */
+const SB_URL = 'https://mgdrmewrylfdceavukii.supabase.co';
+const SB_KEY = 'sb_publishable_-S5LsQ-UT8KQ_zBUoELzDA_aCxZ2Vgz';
+/* ================================================ */
+
+const sb = supabase.createClient(SB_URL, SB_KEY);
+const $ = id => document.getElementById(id);
+const DEFAULT_CATS=['Rent / EMI','Groceries','Food & dining','Transport','Utilities','Shopping','Health','Investments','Entertainment','Education','Other'];
+const inr=n=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(n);
+const today=()=>new Date().toISOString().slice(0,10);
+const mkey=d=>d.slice(0,7);
+const mlabel=k=>new Date(k+'-01T00:00:00').toLocaleString('en-IN',{month:'long',year:'numeric'});
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fromRow=r=>({id:r.id,date:r.date,cat:r.category,amt:Number(r.amount),note:r.note||''});
+let entries=[], cur=mkey(today()), user=null;
+
+/* ---------- auth ---------- */
+function showAuth(msg,isErr){const m=$('authmsg');m.textContent=msg||'';m.className='msg'+(isErr?' err':'')}
+async function creds(fn){
+  const email=$('email').value.trim(), password=$('pass').value;
+  if(!email||password.length<6){showAuth('Enter your email and a password of at least 6 characters.',true);return}
+  showAuth('Working…');
+  const {data,error}=await fn({email,password});
+  if(error){showAuth(error.message,true);return}
+  if(!data.session)showAuth('Account created. Check your email to confirm it, then sign in.');
+}
+$('signin').onclick=()=>creds(c=>sb.auth.signInWithPassword(c));
+$('signup').onclick=()=>creds(c=>sb.auth.signUp(c));
+$('signout').onclick=()=>sb.auth.signOut();
+$('pass').addEventListener('keydown',e=>{if(e.key==='Enter')$('signin').click()});
+
+sb.auth.onAuthStateChange((_evt,session)=>{
+  user=session?session.user:null;
+  $('auth').hidden=!!user; $('app').hidden=!user;
+  if(user){$('who').textContent='Signed in as '+user.email+'. Your entries sync across your devices.';load()}
+  else{entries=[];showAuth('')}
+});
+
+/* ---------- data ---------- */
+async function load(){
+  const {data,error}=await sb.from('expenses').select('*').order('date',{ascending:false});
+  if(error){$('err').textContent='Could not load entries: '+error.message;return}
+  entries=data.map(fromRow); render();
+}
+$('add').onclick=async()=>{
+  const date=$('date').value,cat=$('cat').value.trim(),amt=parseFloat($('amt').value);
+  if(!date||!cat||!(amt>0)){$('err').textContent='Enter a date, a category and an amount above 0.';return}
+  $('err').textContent=''; $('add').disabled=true;
+  const {data,error}=await sb.from('expenses').insert({date,category:cat,amount:amt,note:$('note').value.trim()}).select().single();
+  $('add').disabled=false;
+  if(error){$('err').textContent='Could not save: '+error.message;return}
+  entries.push(fromRow(data)); cur=mkey(date);
+  $('amt').value='';$('note').value='';render();$('amt').focus();
+};
+['amt','note','cat'].forEach(i=>$(i).addEventListener('keydown',e=>{if(e.key==='Enter')$('add').click()}));
+$('list').onclick=async e=>{
+  const id=e.target.dataset.id;
+  if(!id||!confirm('Delete this entry?'))return;
+  const {error}=await sb.from('expenses').delete().eq('id',id);
+  if(error){$('err').textContent='Could not delete: '+error.message;return}
+  entries=entries.filter(x=>x.id!==id);render();
+};
+
+/* ---------- render ---------- */
+const months=()=>{const s=new Set(entries.map(e=>mkey(e.date)));s.add(mkey(today()));return [...s].sort().reverse()};
+const cats=()=>{const s=new Set(DEFAULT_CATS);entries.forEach(e=>s.add(e.cat));return [...s]};
+function render(){
+  const ms=months(); if(!ms.includes(cur))cur=ms[0];
+  $('month').innerHTML=ms.map(m=>`<option value="${m}"${m===cur?' selected':''}>${mlabel(m)}</option>`).join('');
+  $('cats').innerHTML=cats().map(c=>`<option value="${esc(c)}">`).join('');
+  const mine=entries.filter(e=>mkey(e.date)===cur).sort((a,b)=>b.date.localeCompare(a.date));
+  $('total').textContent=inr(mine.reduce((s,e)=>s+e.amt,0));
+  $('sub').textContent=mine.length?`${mine.length} entr${mine.length===1?'y':'ies'} in ${mlabel(cur)}`:`Nothing logged for ${mlabel(cur)} yet`;
+
+  const by={};mine.forEach(e=>by[e.cat]=(by[e.cat]||0)+e.amt);
+  const rows=Object.entries(by).sort((a,b)=>b[1]-a[1]), max=rows.length?rows[0][1]:1;
+  $('bars').innerHTML=rows.length?rows.map(([c,v])=>`<div class="row"><span>${esc(c)}</span><div class="track"><div class="fill" style="width:${v/max*100}%"></div></div><span class="amt">${inr(v)}</span></div>`).join(''):'<p class="empty">Add an expense to see where the money went.</p>';
+
+  const mm=months().slice(0,12).reverse(), used=cats().filter(c=>entries.some(e=>e.cat===c));
+  if(!used.length){$('matrix').innerHTML='<p class="empty">Your month-by-category table will appear here.</p>'}
+  else{
+    const sum=(f)=>entries.filter(f).reduce((s,e)=>s+e.amt,0);
+    let h='<table><thead><tr><th>Category</th>'+mm.map(m=>`<th>${new Date(m+'-01T00:00:00').toLocaleString('en-IN',{month:'short',year:'2-digit'})}</th>`).join('')+'</tr></thead><tbody>';
+    used.forEach(c=>{h+=`<tr><td>${esc(c)}</td>`+mm.map(m=>{const v=sum(e=>e.cat===c&&mkey(e.date)===m);return `<td>${v?inr(v):'–'}</td>`}).join('')+'</tr>'});
+    h+='</tbody><tfoot><tr><td>Total</td>'+mm.map(m=>`<td>${inr(sum(e=>mkey(e.date)===m))}</td>`).join('')+'</tr></tfoot></table>';
+    $('matrix').innerHTML=h;
+  }
+  $('list').innerHTML=mine.length?mine.map(e=>`<div class="entry"><span class="d">${e.date.slice(8)}/${e.date.slice(5,7)}</span><span class="n">${esc(e.cat)}${e.note?`<small>${esc(e.note)}</small>`:''}</span><b>${inr(e.amt)}</b><button class="x" data-id="${e.id}" aria-label="Delete entry">Delete</button></div>`).join(''):'<p class="empty">No entries this month.</p>';
+}
+$('date').value=today();
+$('month').onchange=e=>{cur=e.target.value;render()};
+
+/* ---------- export / import ---------- */
+function dl(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+$('csv').onclick=()=>dl('money-log.csv','Date,Category,Amount,Note\n'+entries.slice().sort((a,b)=>a.date.localeCompare(b.date)).map(e=>[e.date,e.cat,e.amt,e.note].map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n'),'text/csv');
+$('json').onclick=()=>dl('money-log-backup.json',JSON.stringify(entries.map(({date,cat,amt,note})=>({date,cat,amt,note})),null,1),'application/json');
+$('imp').onclick=()=>$('file').click();
+$('file').onchange=async e=>{
+  const f=e.target.files[0]; e.target.value=''; if(!f)return;
+  try{
+    const data=JSON.parse(await f.text()); if(!Array.isArray(data))throw 0;
+    const k=x=>[x.date,x.cat,Number(x.amt),x.note||''].join('|');
+    const have=new Set(entries.map(k));
+    const rows=data.filter(x=>x&&x.date&&x.cat&&Number(x.amt)>0&&!have.has(k(x))).map(x=>({date:x.date,category:x.cat,amount:Number(x.amt),note:x.note||''}));
+    if(rows.length){const {error}=await sb.from('expenses').insert(rows);if(error)throw error}
+    await load();
+  }catch(err){alert('Could not import that file.')}
+};
+
+/* show the right screen on first load */
+sb.auth.getSession().then(({data})=>{if(!data.session){$('auth').hidden=false}});
+</script>
+</body>
+</html>
