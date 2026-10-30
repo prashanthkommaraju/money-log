@@ -83,6 +83,16 @@ body.auth{background:#10213a}
 .brand{font-size:1.75rem;font-weight:800;line-height:1.15}
 .tag{color:var(--mute);margin:4px 0 18px}
 .btn.sun{background:var(--acc);color:#10213a}
+.stats{display:flex;gap:16px;flex-wrap:wrap;font-size:.95rem;margin:2px 0 10px;color:#cfd9ea}
+.stats div{display:flex;align-items:center;gap:6px}.stats b{color:#fff}
+.meter{height:8px;border-radius:99px;background:rgba(255,255,255,.14);margin:0 0 10px;overflow:hidden}
+.meter i{display:block;height:100%;border-radius:99px;transition:width .3s}
+.seg{display:flex;background:var(--bg);border-radius:12px;padding:4px;margin-bottom:14px}
+.seg button{flex:1;border:0;background:none;padding:9px;border-radius:9px;font-weight:700;color:var(--mute)}
+.seg button.on{background:var(--btn);color:var(--btntext)}
+.key{display:flex;gap:14px;font-size:.85rem;color:var(--mute);margin:-4px 0 4px}
+.key span{display:flex;align-items:center;gap:6px}.key i{width:10px;height:10px;border-radius:3px;display:block}
+.inc{color:var(--ok)}
 </style>
 </head>
 <body class="auth">
@@ -153,8 +163,13 @@ body.auth{background:#10213a}
 
     <div class="hero">
       <div>
-        <div class="lbl" id="hlabel">Spent</div>
+        <div class="lbl" id="hlabel">Available</div>
         <div class="tot" id="total">₹0</div>
+        <div class="stats">
+          <div><span class="dot" style="background:#2ec4b6"></span>Income <b id="sinc">₹0</b></div>
+          <div><span class="dot" style="background:#ff7a59"></span>Spent <b id="sexp">₹0</b></div>
+        </div>
+        <div class="meter"><i id="meter"></i></div>
         <span class="chip-d" id="delta"></span>
       </div>
       <div id="donut"></div>
@@ -198,9 +213,10 @@ body.auth{background:#10213a}
 
 <!-- Quick-add sheet -->
 <dialog id="sheet"><div class="sheet">
+  <div class="seg" id="seg"><button data-k="expense" class="on">Expense</button><button data-k="income">Income</button></div>
   <label for="amt">Amount</label>
   <div class="amt"><span>₹</span><input id="amt" type="number" min="0" step="any" inputmode="decimal" placeholder="0"></div>
-  <label style="margin-top:8px">Category</label>
+  <label id="slabel" style="margin-top:8px">Category</label>
   <div class="chips" id="chips"></div>
   <input id="newcat" placeholder="Or type a new category">
   <div class="grid2">
@@ -238,10 +254,14 @@ const mlabel=k=>new Date(k+'-01T00:00:00').toLocaleString('en-IN',{month:'long',
 const mshort=k=>new Date(k+'-01T00:00:00').toLocaleString('en-IN',{month:'short'});
 const shift=(k,n)=>{const d=new Date(k+'-01T00:00:00');d.setMonth(d.getMonth()+n);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')};
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const fromRow=r=>({id:r.id,date:r.date,cat:r.category,amt:Number(r.amount),note:r.note||''});
+const fromRow=r=>({id:r.id,date:r.date,cat:r.category,amt:Number(r.amount),note:r.note||'',kind:r.kind==='income'?'income':'expense'});
+const DEFAULT_SRCS=['Salary','Freelance','Interest','Rent received','Gift','Other'];
 let entries=[],budgets={},budgetsOk=true,cur=mkey(today()),user=null,CATS=[],pick='';
 const color=c=>PAL[Math.max(0,CATS.indexOf(c))%PAL.length];
-const sumBy=f=>entries.filter(f).reduce((s,e)=>s+e.amt,0);
+const exps=()=>entries.filter(e=>e.kind!=='income'),incs=()=>entries.filter(e=>e.kind==='income');
+const sumE=f=>exps().filter(f).reduce((s,e)=>s+e.amt,0),sumI=f=>incs().filter(f).reduce((s,e)=>s+e.amt,0);
+const SRCS=()=>[...new Set([...DEFAULT_SRCS,...incs().map(e=>e.cat)])];
+let mode='expense';
 
 /* ---------- auth ---------- */
 function authMsg(m,bad){const e=$('authmsg');e.textContent=m||'';e.className='msg'+(bad?' err':'')}
@@ -280,26 +300,33 @@ async function load(){
 
 /* ---------- render ---------- */
 function render(){
-  const set=new Set(DEFAULT_CATS);entries.forEach(e=>set.add(e.cat));Object.keys(budgets).forEach(c=>set.add(c));CATS=[...set];
+  const set=new Set(DEFAULT_CATS);exps().forEach(e=>set.add(e.cat));Object.keys(budgets).forEach(c=>set.add(c));CATS=[...set];
   $('mlabel').textContent=mlabel(cur);
   const mine=entries.filter(e=>mkey(e.date)===cur).sort((a,b)=>b.date.localeCompare(a.date));
-  const total=mine.reduce((s,e)=>s+e.amt,0);
-  const prevTotal=sumBy(e=>mkey(e.date)===shift(cur,-1));
-  $('hlabel').textContent='Spent in '+mshort(cur);
-  $('total').textContent=inr(total);
-  $('delta').textContent=prevTotal?(total>=prevTotal?'▲ ':'▼ ')+Math.round(Math.abs(total-prevTotal)/prevTotal*100)+'% vs '+mshort(shift(cur,-1)):'No spending logged last month';
+  const mineE=mine.filter(e=>e.kind!=='income');
+  const spent=mineE.reduce((s,e)=>s+e.amt,0),income=sumI(e=>mkey(e.date)===cur),bal=income-spent;
+  const prevSpent=sumE(e=>mkey(e.date)===shift(cur,-1));
+  $('hlabel').textContent='Available in '+mshort(cur);
+  $('total').textContent=inr(bal);$('total').style.color=bal<0?'#ff9a7d':'#fff';
+  $('sinc').textContent=inr(income);$('sexp').textContent=inr(spent);
+  const pct=income?spent/income*100:(spent?100:0);
+  $('meter').style.width=Math.min(100,pct)+'%';
+  $('meter').style.background=pct>100?'#ff7a59':pct>=80?'#f4b400':'#2ec4b6';
+  const parts=[];
+  if(!income&&spent)parts.push('No income logged for '+mshort(cur));
+  else if(income)parts.push(Math.round(pct)+'% of income spent');
+  if(prevSpent)parts.push((spent>=prevSpent?'▲ ':'▼ ')+Math.round(Math.abs(spent-prevSpent)/prevSpent*100)+'% spend vs '+mshort(shift(cur,-1)));
+  $('delta').textContent=parts.join(' · ')||'Nothing logged yet';
 
-  const by={};mine.forEach(e=>by[e.cat]=(by[e.cat]||0)+e.amt);
+  const by={};mineE.forEach(e=>by[e.cat]=(by[e.cat]||0)+e.amt);
   const rows=Object.entries(by).sort((a,b)=>b[1]-a[1]);
 
-  // donut
   let off=25,svg='<svg viewBox="0 0 42 42" class="donut" role="img" aria-label="Spending by category"><circle cx="21" cy="21" r="15.9155" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="5"/>';
-  rows.forEach(([c,v])=>{const p=v/total*100;svg+=`<circle cx="21" cy="21" r="15.9155" fill="none" stroke="${color(c)}" stroke-width="5" stroke-dasharray="${p} ${100-p}" stroke-dashoffset="${off}"/>`;off-=p});
-  svg+=`<text x="21" y="23" text-anchor="middle" font-size="5.2" font-weight="800" fill="#fff">${total?compact(total):'₹0'}</text></svg>`;
+  rows.forEach(([c,v])=>{const p=v/spent*100;svg+=`<circle cx="21" cy="21" r="15.9155" fill="none" stroke="${color(c)}" stroke-width="5" stroke-dasharray="${p} ${100-p}" stroke-dashoffset="${off}"/>`;off-=p});
+  svg+=`<text x="21" y="22" text-anchor="middle" font-size="5.2" font-weight="800" fill="#fff">${spent?compact(spent):'₹0'}</text><text x="21" y="27" text-anchor="middle" font-size="3" fill="#a9b8d0">spent</text></svg>`;
   $('donut').innerHTML=svg;
-  $('legend').innerHTML=rows.length?rows.map(([c,v])=>`<div class="lg"><span class="dot" style="background:${color(c)}"></span><span class="nm">${esc(c)}</span><b>${inr(v)}</b><span class="pc">${Math.round(v/total*100)}%</span></div>`).join(''):'<div class="lg" style="color:#a9b8d0">Nothing logged yet. Tap Add to start.</div>';
+  $('legend').innerHTML=rows.length?rows.map(([c,v])=>`<div class="lg"><span class="dot" style="background:${color(c)}"></span><span class="nm">${esc(c)}</span><b>${inr(v)}</b><span class="pc">${Math.round(v/spent*100)}%</span></div>`).join(''):'<div class="lg" style="color:#a9b8d0">No spending yet. Tap Add to log income or an expense.</div>';
 
-  // budgets
   const bcats=[...new Set([...Object.keys(budgets),...Object.keys(by)])];
   let bh=budgetsOk?'':'<div class="note">Budgets need one extra database table. Run the budgets SQL in Supabase, then reload.</div>';
   if(budgetsOk){
@@ -314,23 +341,26 @@ function render(){
   }
   $('budgets').innerHTML=bh;
 
-  // trend
   const ms=[];for(let i=5;i>=0;i--)ms.push(shift(cur,-i));
-  const vals=ms.map(m=>sumBy(e=>mkey(e.date)===m)),mx=Math.max(...vals,1);
-  let t='<svg viewBox="0 0 320 130" width="100%" role="img" aria-label="Spending over the last 6 months">';
+  const ev=ms.map(m=>sumE(e=>mkey(e.date)===m)),iv=ms.map(m=>sumI(e=>mkey(e.date)===m)),mx=Math.max(...ev,...iv,1);
+  let t='<div class="key"><span><i style="background:var(--ok)"></i>Income</span><span><i style="background:var(--acc)"></i>Spent</span></div><svg viewBox="0 0 320 130" width="100%" role="img" aria-label="Income and spending over the last 6 months">';
   ms.forEach((m,i)=>{
-    const step=320/6,x=i*step+(step-34)/2,h=vals[i]/mx*78,y=98-h,on=m===cur;
-    t+=`<g data-m="${m}" style="cursor:pointer"><rect x="${x}" y="${y}" width="34" height="${Math.max(h,2)}" rx="6" fill="${on?'var(--acc)':'var(--track)'}"/><text x="${x+17}" y="${y-5}" text-anchor="middle" font-size="9.5" font-weight="700" fill="var(--ink)">${vals[i]?compact(vals[i]):''}</text><text x="${x+17}" y="116" text-anchor="middle" font-size="10.5" font-weight="${on?800:500}" fill="var(--mute)">${mshort(m)}</text><rect x="${i*step}" y="0" width="${step}" height="130" fill="transparent"/></g>`;
+    const step=320/6,cx=i*step+step/2,on=m===cur,op=on?1:.5;
+    const hi=iv[i]/mx*72,he=ev[i]/mx*72;
+    t+=`<g data-m="${m}" style="cursor:pointer" opacity="${op}"><rect x="${cx-19}" y="${98-hi}" width="18" height="${Math.max(hi,2)}" rx="5" fill="var(--ok)"/><rect x="${cx+1}" y="${98-he}" width="18" height="${Math.max(he,2)}" rx="5" fill="var(--acc)"/>`;
+    if(on){
+      if(iv[i])t+=`<text x="${cx-10}" y="${93-hi}" text-anchor="middle" font-size="8.5" font-weight="700" fill="var(--ink)">${compact(iv[i])}</text>`;
+      if(ev[i])t+=`<text x="${cx+10}" y="${93-he}" text-anchor="middle" font-size="8.5" font-weight="700" fill="var(--ink)">${compact(ev[i])}</text>`;
+    }
+    t+=`<text x="${cx}" y="116" text-anchor="middle" font-size="10.5" font-weight="${on?800:500}" fill="var(--mute)">${mshort(m)}</text><rect x="${i*step}" y="0" width="${step}" height="130" fill="transparent"/></g>`;
   });
   $('trend').innerHTML=t+'</svg>';
 
-  // matrix
   const mm=[];for(let i=11;i>=0;i--)mm.push(shift(cur,-i));
-  const used=CATS.filter(c=>entries.some(e=>e.cat===c));
-  $('matrix').innerHTML=used.length?'<table><thead><tr><th>Category</th>'+mm.map(m=>`<th>${mshort(m)}</th>`).join('')+'</tr></thead><tbody>'+used.map(c=>`<tr><td>${esc(c)}</td>`+mm.map(m=>{const v=sumBy(e=>e.cat===c&&mkey(e.date)===m);return `<td>${v?inr(v):'–'}</td>`}).join('')+'</tr>').join('')+'</tbody><tfoot><tr><td>Total</td>'+mm.map(m=>`<td>${inr(sumBy(e=>mkey(e.date)===m))}</td>`).join('')+'</tr></tfoot></table>':'<p class="empty">Your month-by-category table will appear here.</p>';
+  const used=CATS.filter(c=>exps().some(e=>e.cat===c));
+  $('matrix').innerHTML=entries.length?'<table><thead><tr><th>Category</th>'+mm.map(m=>`<th>${mshort(m)}</th>`).join('')+'</tr></thead><tbody>'+used.map(c=>`<tr><td>${esc(c)}</td>`+mm.map(m=>{const v=sumE(e=>e.cat===c&&mkey(e.date)===m);return `<td>${v?inr(v):'–'}</td>`}).join('')+'</tr>').join('')+'</tbody><tfoot><tr><td>Spent</td>'+mm.map(m=>`<td>${inr(sumE(e=>mkey(e.date)===m))}</td>`).join('')+'</tr><tr><td>Income</td>'+mm.map(m=>`<td>${inr(sumI(e=>mkey(e.date)===m))}</td>`).join('')+'</tr><tr><td>Balance</td>'+mm.map(m=>`<td>${inr(sumI(e=>mkey(e.date)===m)-sumE(e=>mkey(e.date)===m))}</td>`).join('')+'</tr></tfoot></table>':'<p class="empty">Your month-by-category table will appear here.</p>';
 
-  // entries
-  $('list').innerHTML=mine.length?mine.map(e=>`<div class="entry"><span class="dot" style="background:${color(e.cat)}"></span><span class="n">${esc(e.cat)}${e.note?`<small>${esc(e.note)}</small>`:''}</span><span class="d">${new Date(e.date+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</span><b>${inr(e.amt)}</b><button class="x" data-id="${e.id}" aria-label="Delete entry">✕</button></div>`).join(''):'<p class="empty">No entries in '+mlabel(cur)+'.</p>';
+  $('list').innerHTML=mine.length?mine.map(e=>{const inc=e.kind==='income';return `<div class="entry"><span class="dot" style="background:${inc?'var(--ok)':color(e.cat)}"></span><span class="n">${esc(e.cat)}${inc?' <small style="display:inline">income</small>':''}${e.note?`<small>${esc(e.note)}</small>`:''}</span><span class="d">${new Date(e.date+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</span><b class="${inc?'inc':''}">${inc?'+':''}${inr(e.amt)}</b><button class="x" data-id="${e.id}" aria-label="Delete entry">✕</button></div>`}).join(''):'<p class="empty">No entries in '+mlabel(cur)+'.</p>';
 }
 $('prev').onclick=()=>{cur=shift(cur,-1);render()};
 $('next').onclick=()=>{cur=shift(cur,1);render()};
@@ -338,24 +368,35 @@ $('trend').onclick=e=>{const g=e.target.closest('[data-m]');if(g){cur=g.dataset.
 
 /* ---------- quick add ---------- */
 function drawChips(){
-  const cnt={};entries.forEach(e=>cnt[e.cat]=(cnt[e.cat]||0)+1);
-  const order=[...CATS].sort((a,b)=>(cnt[b]||0)-(cnt[a]||0));
+  const inc=mode==='income',cnt={};
+  entries.filter(e=>(e.kind==='income')===inc).forEach(e=>cnt[e.cat]=(cnt[e.cat]||0)+1);
+  const order=[...(inc?SRCS():CATS)].sort((a,b)=>(cnt[b]||0)-(cnt[a]||0));
   $('chips').innerHTML=order.map(c=>`<button class="chip${c===pick?' on':''}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
 }
+function setMode(m){
+  mode=m;pick='';$('newcat').value='';
+  document.querySelectorAll('#seg button').forEach(b=>b.classList.toggle('on',b.dataset.k===m));
+  const inc=m==='income';
+  $('slabel').textContent=inc?'Source':'Category';
+  $('newcat').placeholder=inc?'Or type a new source':'Or type a new category';
+  $('save').textContent=inc?'Save income':'Save expense';
+  drawChips();
+}
+$('seg').onclick=e=>{const b=e.target.closest('[data-k]');if(b)setMode(b.dataset.k)};
 $('fab').onclick=()=>{
-  pick='';$('amt').value='';$('note').value='';$('newcat').value='';$('err').textContent='';$('date').value=today();
-  drawChips();$('sheet').showModal();setTimeout(()=>$('amt').focus(),50);
+  $('amt').value='';$('note').value='';$('err').textContent='';$('date').value=today();
+  setMode('expense');$('sheet').showModal();setTimeout(()=>$('amt').focus(),50);
 };
 $('chips').onclick=e=>{const b=e.target.closest('[data-c]');if(!b)return;pick=b.dataset.c;$('newcat').value='';drawChips()};
 $('newcat').oninput=e=>{pick=e.target.value.trim();drawChips()};
 $('cancel').onclick=()=>$('sheet').close();
 $('save').onclick=async()=>{
   const date=$('date').value,cat=pick,amt=parseFloat($('amt').value);
-  if(!(amt>0)||!cat||!date){$('err').textContent='Enter an amount, pick a category and a date.';return}
+  if(!(amt>0)||!cat||!date){$('err').textContent='Enter an amount, pick a '+(mode==='income'?'source':'category')+' and a date.';return}
   $('save').disabled=true;
-  const {data,error}=await sb.from('expenses').insert({date,category:cat,amount:amt,note:$('note').value.trim()}).select().single();
+  const {data,error}=await sb.from('expenses').insert({date,category:cat,amount:amt,note:$('note').value.trim(),kind:mode}).select().single();
   $('save').disabled=false;
-  if(error){$('err').textContent='Could not save: '+error.message;return}
+  if(error){$('err').textContent=/kind/.test(error.message)?'Income needs a small database update. Run the income SQL in Supabase, then try again.':'Could not save: '+error.message;return}
   entries.push(fromRow(data));cur=mkey(date);$('sheet').close();render();
 };
 $('amt').addEventListener('keydown',e=>{if(e.key==='Enter')$('save').click()});
@@ -394,16 +435,17 @@ $('bdel').onclick=async()=>{
 
 /* ---------- export / import ---------- */
 function dl(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
-$('csv').onclick=()=>dl('money-log.csv','Date,Category,Amount,Note\n'+entries.slice().sort((a,b)=>a.date.localeCompare(b.date)).map(e=>[e.date,e.cat,e.amt,e.note].map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n'),'text/csv');
-$('json').onclick=()=>dl('money-log-backup.json',JSON.stringify(entries.map(({date,cat,amt,note})=>({date,cat,amt,note})),null,1),'application/json');
+$('csv').onclick=()=>dl('money-log.csv','Date,Type,Category,Amount,Note\n'+entries.slice().sort((a,b)=>a.date.localeCompare(b.date)).map(e=>[e.date,e.kind,e.cat,e.amt,e.note].map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n'),'text/csv');
+$('json').onclick=()=>dl('money-log-backup.json',JSON.stringify(entries.map(({date,cat,amt,note,kind})=>({date,cat,amt,note,kind})),null,1),'application/json');
 $('imp').onclick=()=>$('file').click();
 $('file').onchange=async e=>{
   const f=e.target.files[0];e.target.value='';if(!f)return;
   try{
     const data=JSON.parse(await f.text());if(!Array.isArray(data))throw 0;
-    const k=x=>[x.date,x.cat,Number(x.amt),x.note||''].join('|');
+    const kd=x=>x.kind==='income'?'income':'expense';
+    const k=x=>[x.date,kd(x),x.cat,Number(x.amt),x.note||''].join('|');
     const have=new Set(entries.map(k));
-    const rows=data.filter(x=>x&&x.date&&x.cat&&Number(x.amt)>0&&!have.has(k(x))).map(x=>({date:x.date,category:x.cat,amount:Number(x.amt),note:x.note||''}));
+    const rows=data.filter(x=>x&&x.date&&x.cat&&Number(x.amt)>0&&!have.has(k(x))).map(x=>({date:x.date,category:x.cat,amount:Number(x.amt),note:x.note||'',kind:kd(x)}));
     if(rows.length){const {error}=await sb.from('expenses').insert(rows);if(error)throw error}
     await load();
   }catch(err){alert('Could not import that file.')}
